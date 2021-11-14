@@ -11,6 +11,9 @@ import random
 from enum import Enum
 from abc import ABC, abstractmethod
 
+
+DIFFICULTY_HASH = 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
 class Operation(Enum):
 	RECOVER = 1
 	TRANSPORT = 2
@@ -100,24 +103,83 @@ class Mechanic(Node):
 		Node.transactionPool.add(f"{Operation.REPAIR.value}|{VIN}|{self.id}")
 		print(f"{self.name}({self.id}) repaired VIN: {VIN}")
 
+class Block():
+	def __init__(self, data, timestamp, previous_hash):
+		self.data = data 
+		self.timestamp = timestamp
+		self.previous_hash = previous_hash
+		self.nonce = 0
+		self.miner = None 
+		self.hash_block()
+
+	def hash_block(self):
+		sha = hasher.sha256()
+		sha.update(str(self.data).encode('utf-8') + str(self.timestamp).encode('utf-8') + 
+					str(self.previous_hash).encode('utf-8') + str(self.nonce).encode('utf-8'))
+		self.hash = sha.hexdigest()
+		return self.hash
+
+class Blockchain(dict):
+	currentBlock = None
+
+	def __init__(self):
+		dict.__init__(self)
+		self['0'] = self.create_genesis_block()
+		self.currentBlock = '0'
+
+	# Generate genesis block
+	def create_genesis_block(self):
+		# Manually construct a block with index zero and arbitrary previous hash
+		genesis = Block("", date.datetime.now(), "")
+		genesis.hash = '0'
+		return genesis
+
+	def tip(self):
+		if(self.currentBlock != None):
+			return self[self.currentBlock]
+		else:
+			return None
+	
+	def add(self, newBlock):
+		self[newBlock.hash] = newBlock	
+		self.currentBlock = newBlock.hash
+
+	def writeToFile(self):
+		file = open("blockchain.txt", 'w')
+		block = self.tip()
+		while block.hash != '0':
+			file.write("Block Data: " + str(block.data) + "\n")
+			file.write("Hash: " + str(block.hash) + "\n")
+			file.write("Miner Who Discovered Block: " + str(block.miner) + "\n")
+			file.write("----------------------------------\n")
+			block = self[block.previous_hash]
+
+		file.write("Genesis Block \n")
+		file.write("Hash: 0 \n")
+		file.write("Miner Who Discovered Block: NA \n")
+		file.write("----------------------------------\n")
+
+		file.close()
+
 class Main:
 	VIN_length = 11
 	companies = dict()
 	miners = []
+	blockchain = Blockchain()
 	company_ledger = [[100, 'RecoveryInc', Company.RECOVERY, 2],
 	 [200, 'TransportCo', Company.TRANSPORT], [201, 'TransportInc', Company.TRANSPORT],
 	  [300, 'MechanicLtd', Company.MECHANIC], [400, 'LocksmithCo', Company.LOCKSMITH],
 	   [500, 'AuctionCo', Company.AUCTION, 2], [501, 'AuctionLLC', Company.AUCTION, 3]]
 
 	def run(self):
-		self.setupNodes();	
-		self.runSimulation();
+		self.setupNodes()
+		self.runSimulation()
 
 	def setupNodes(self):
 		for company in self.company_ledger:
 			if(company[2] == Company.RECOVERY):	
 				Main.companies[company[0]] = Recovery(company[0], company[1])
-				Main.miners.extend(company[3] * [company[0]])
+				self.miners.extend(company[3] * [company[0]])
 			elif(company[2] == Company.TRANSPORT):	
 				Main.companies[company[0]] = Transport(company[0], company[1])
 			elif(company[2] == Company.LOCKSMITH):	
@@ -126,7 +188,7 @@ class Main:
 				Main.companies[company[0]] = Mechanic(company[0], company[1])
 			elif(company[2] == Company.AUCTION):	
 				Main.companies[company[0]] = Auction(company[0], company[1])
-				Main.miners.extend(company[3] * [company[0]])
+				self.miners.extend(company[3] * [company[0]])
 
 	def runSimulation(self):
 		firstVIN = self.generateVIN()
@@ -142,9 +204,23 @@ class Main:
 		Main.companies[500].performOperation(firstVIN)
 
 		self.runMining()
+		self.blockchain.writeToFile()
 
 	def runMining(self):
-		random.shuffle(Main.miners)
+		random.shuffle(self.miners)
+		while(not Node.transactionPool.is_empty):
+			newBlock = Block(Node.transactionPool.pop(), date.datetime.now(), self.blockchain.tip().hash)
+			miner = None
+
+			# While the hash is bigger than or equal to the difficulty continue to iterate the nonce
+			while int(newBlock.hash_block(), 16) >= DIFFICULTY_HASH:
+				newBlock.nonce += 1
+				miner = self.miners[newBlock.nonce % len(self.miners)]
+				newBlock.miner = miner
+
+			#add found block to the chain
+			self.blockchain.add(newBlock)
+
 
 	def generateVIN(self):
 		return ''.join(random.choices(string.ascii_uppercase + string.digits, k = self.VIN_length))    

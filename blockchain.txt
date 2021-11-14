@@ -1,0 +1,24 @@
+Block Data: 5|WRG5YWTQX9E|500
+Hash: 00000be3c5675bf42e1969ef2e2da153380359aeb8a0b70d348e31ad1a1f34a6
+Miner Who Discovered Block: 500
+----------------------------------
+Block Data: 2|WRG5YWTQX9E|201|300|500
+Hash: 00002b34c0a8ca2f547fe269daf79f0441f974dd8c12f735104ad90354dfa0ef
+Miner Who Discovered Block: 501
+----------------------------------
+Block Data: 3|WRG5YWTQX9E|300
+Hash: 00001187a98eb2178680c7b99a5f2ca33b7ca635f133e11f2785d9e646fddb9e
+Miner Who Discovered Block: 501
+----------------------------------
+Block Data: 2|WRG5YWTQX9E|200|100|300
+Hash: 0000a82d6308d05ed7f7934de0f907a05f42897ec219a3c1938b4af9597dcdaa
+Miner Who Discovered Block: 100
+----------------------------------
+Block Data: 1|WRG5YWTQX9E|100
+Hash: 00002fc82343b85cd9df1fed68d6867335315bcf1eca4caff138c43e91028ad8
+Miner Who Discovered Block: 500
+----------------------------------
+Genesis Block 
+Hash: 0 
+Miner Who Discovered Block: NA 
+----------------------------------
