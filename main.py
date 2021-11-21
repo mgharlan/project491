@@ -173,6 +173,9 @@ class Main:
 
 	def run(self):
 		self.setupNodes()
+
+		print("---------------------")
+
 		self.runSimulation()
 
 	def setupNodes(self):
@@ -211,6 +214,8 @@ class Main:
 		#Run mining simulation
 		self.runMining()
 
+		print("---------------------")
+
 		secondVIN = self.generateVIN()
 
 		#RecoveryInc recovers a car and logs the operation
@@ -231,7 +236,12 @@ class Main:
 		#Run mining simulation
 		self.runMining()
 
+		print("---------------------")
+
 		self.trace(firstVIN)
+
+		print("---------------------")
+
 		self.trace(secondVIN)
 
 		self.blockchain.writeToFile()
@@ -266,15 +276,15 @@ class Main:
 				if(operation == Operation.RECOVER):
 					transactionHistory.insert(0, f"{company.name}({company.id}) recovered VIN: {VIN}")
 				elif(operation == Operation.TRANSPORT):
-					transactionHistory.insert(0, f"{company.name}({company.id}) transported VIN: {VIN} from {self.companies[int(data[3])].name} to {self.companies[int(data[4])].name}")	
+					transactionHistory.insert(0, f"{company.name}({company.id}) transported VIN: {VIN} from {self.companies[int(data[3])].name}({self.companies[int(data[3])].id}) to {self.companies[int(data[4])].name}({self.companies[int(data[4])].id})")	
 				elif(operation == Operation.REPAIR):
-					print("3")
+					transactionHistory.insert(0, f"{company.name}({company.id}) repaired VIN: {VIN}")
 				elif(operation == Operation.CUT_KEYS):
-					print("4")
+					transactionHistory.insert(0, f"{company.name}({company.id}) cut keys for VIN: {VIN}")
 				elif(operation == Operation.AUCTION):
-					print("5")
+					transactionHistory.insert(0, f"{company.name}({company.id}) auctioned VIN: {VIN}")	
 				else:
-					print("Operation not recognized")
+					transactionHistory.insert(0, "Operation not recognized")
 			currentBlock = self.blockchain[currentBlock.previous_hash]
 
 		for log in transactionHistory:
