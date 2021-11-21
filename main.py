@@ -192,10 +192,14 @@ class Main:
 
 	def runSimulation(self):
 		firstVIN = self.generateVIN()
-		#RecoveryCo recovers a car and logs the operation
+		#RecoveryInc recovers a car
 		Main.companies[100].performOperation(firstVIN)
-		#TransportCo takes the car from RecoveryCo and delivers it to MechanicLtd
+		#TransportCo takes the car from RecoveryInc and delivers it to MechanicLtd
 		Main.companies[200].performOperation(firstVIN, 100, 300)
+
+		#Run mining simulation
+		self.runMining()
+
 		#MechanicLtd repairs the car
 		Main.companies[300].performOperation(firstVIN)
 		#TransportInc takes the car from MechanicLtd and delivers it to AuctionCo
@@ -203,7 +207,33 @@ class Main:
 		#AuctionCo auctions the car
 		Main.companies[500].performOperation(firstVIN)
 
+
+		#Run mining simulation
 		self.runMining()
+
+		secondVIN = self.generateVIN()
+
+		#RecoveryInc recovers a car and logs the operation
+		Main.companies[100].performOperation(secondVIN)
+		#TransportInc takes the car from RecoveryCO and delivers it to LocksmithCo
+		Main.companies[201].performOperation(secondVIN, 100, 400)
+
+		#Run mining simulation
+		self.runMining()
+
+		#LocksmithCo cuts keys for the car
+		Main.companies[400].performOperation(secondVIN)	
+		#TransportCo takes the car from LocksmithCo and delivers it to AuctionLLC
+		Main.companies[200].performOperation(secondVIN, 400, 501)
+		#AuctionLLC auctions the car
+		Main.companies[501].performOperation(secondVIN)
+
+		#Run mining simulation
+		self.runMining()
+
+		self.trace(firstVIN)
+		self.trace(secondVIN)
+
 		self.blockchain.writeToFile()
 
 	def runMining(self):
@@ -226,8 +256,29 @@ class Main:
 		return ''.join(random.choices(string.ascii_uppercase + string.digits, k = self.VIN_length))    
 
 	def trace(self, VIN):
-		# print(Operation(int(Node.transactionPool.pop().split('|')[0])) == Operation.RECOVER)
-		pass
+		currentBlock = self.blockchain.tip()
+		transactionHistory = []
+		while(currentBlock.hash != '0'):
+			if(currentBlock.data.split('|')[1] == VIN):
+				data = currentBlock.data.split('|')
+				operation = Operation(int(data[0]))	
+				company = self.companies[int(data[2])]
+				if(operation == Operation.RECOVER):
+					transactionHistory.insert(0, f"{company.name}({company.id}) recovered VIN: {VIN}")
+				elif(operation == Operation.TRANSPORT):
+					transactionHistory.insert(0, f"{company.name}({company.id}) transported VIN: {VIN} from {self.companies[int(data[3])].name} to {self.companies[int(data[4])].name}")	
+				elif(operation == Operation.REPAIR):
+					print("3")
+				elif(operation == Operation.CUT_KEYS):
+					print("4")
+				elif(operation == Operation.AUCTION):
+					print("5")
+				else:
+					print("Operation not recognized")
+			currentBlock = self.blockchain[currentBlock.previous_hash]
+
+		for log in transactionHistory:
+			print(log)
 
 if __name__ == "__main__":	
 	Main().run()
