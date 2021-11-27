@@ -134,6 +134,15 @@ class Blockchain(dict):
 		genesis.hash = '0'
 		return genesis
 
+	def getLastBlockWithVin(self, VIN):
+		block = self.tip()
+		while(block.hash != '0'):
+			if(block.data.split('|')[1] == VIN):
+				return block
+			else:
+				block = self[block.previous_hash]
+		return None
+
 	def tip(self):
 		if(self.currentBlock != None):
 			return self[self.currentBlock]
@@ -251,16 +260,30 @@ class Main:
 		while(not Node.transactionPool.is_empty):
 			newBlock = Block(Node.transactionPool.pop(), date.datetime.now(), self.blockchain.tip().hash)
 			miner = None
+			accepted = False
 
-			# While the hash is bigger than or equal to the difficulty continue to iterate the nonce
-			while int(newBlock.hash_block(), 16) >= DIFFICULTY_HASH:
-				newBlock.nonce += 1
-				miner = self.miners[newBlock.nonce % len(self.miners)]
-				newBlock.miner = miner
+			#check if transaction is valid before mining
+			dataList = newBlock.data.split('|')
+			lastBlockWithVin = self.blockchain.getLastBlockWithVin(dataList[1]) 
+			if(Operation(int(dataList[0])) == Operation.RECOVER):
+				accepted = True
+			elif(Operation(int(dataList[0])) == Operation.TRANSPORT):
+				if(dataList[3] == lastBlockWithVin.data.split('|')[-1]):
+					accepted = True
+			else:
+				if(lastBlockWithVin != None and dataList[2] == lastBlockWithVin.data.split('|')[-1]):
+					accepted = True
 
-			#add found block to the chain
-			self.blockchain.add(newBlock)
-
+			#if transaction is valid
+			if(accepted):
+				# While the hash is bigger than or equal to the difficulty continue to iterate the nonce
+				while int(newBlock.hash_block(), 16) >= DIFFICULTY_HASH:
+					newBlock.nonce += 1
+					miner = self.miners[newBlock.nonce % len(self.miners)]
+					newBlock.miner = miner
+				self.blockchain.add(newBlock)
+			else:
+				print(f"{newBlock.data} rejected")
 
 	def generateVIN(self):
 		return ''.join(random.choices(string.ascii_uppercase + string.digits, k = self.VIN_length))    
