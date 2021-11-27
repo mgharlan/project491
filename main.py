@@ -246,12 +246,28 @@ class Main:
 		self.runMining()
 
 		print("---------------------")
+		
+		thirdVIN = self.generateVIN()
+
+		#RecoveryInc recovers a car and logs the operation
+		Main.companies[100].performOperation(thirdVIN)
+		#TransportInc takes the car from RecoveryCO and delivers it to LocksmithCo
+		Main.companies[201].performOperation(thirdVIN, 200, 400)
+
+		#Run mining simulation
+		self.runMining()
+
+		print("---------------------")
 
 		self.trace(firstVIN)
 
 		print("---------------------")
 
 		self.trace(secondVIN)
+
+		print("---------------------")
+
+		self.trace(thirdVIN)
 
 		self.blockchain.writeToFile()
 
